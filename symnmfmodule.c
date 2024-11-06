@@ -52,7 +52,7 @@ PyObject* convertCToPy(double** mat, int N, int cols) {
 
 static PyObject* ddg_func(PyObject *self, PyObject *args){
     PyObject *X;
-    double **X_mat, **D_mat;
+    double **X_mat, **D_mat, **A_mat;
     int N, cols;
 
     if(!PyArg_ParseTuple(args, "O", &X)) {
@@ -63,9 +63,12 @@ static PyObject* ddg_func(PyObject *self, PyObject *args){
     N = PyList_Size(X); // get the number of data points in the X matrix
     cols = PyList_Size( PyList_GetItem(X, 0) ); // get the number of columns (the dimension) of each data point
     X_mat = convertPyToC(X, N, cols); 
-    D_mat = ddg(X_mat, N, cols); // calls the sym function from the symnmf.c
-    result = convertCToPy(A_mat, N, N);
+    A_mat = sym(X_mat, N, cols); // calls the sym function from the symnmf.c
+    D_mat = ddg(A_mat, N); // calls the ddg function from the symnmf.c
+    result = convertCToPy(D_mat, N, N);
+    
     freeMat(X_mat, N);
+    freeMat(A_mat, N);
     freeMat(D_mat, N);
     return result;
 }
@@ -84,20 +87,35 @@ static PyObject* sym_func(PyObject *self, PyObject *args){
     X_mat = convertPyToC(X, N, cols); 
     A_mat = sym(X_mat, N, cols); // calls the sym function from the symnmf.c
     result = convertCToPy(A_mat, N, N);
+    
     freeMat(X_mat, N);
     freeMat(A_mat, N);
     return result;
 }
 
 static PyObject* norm_func(PyObject *self, PyObject *args){
-    PyObject *X;
+    PyObject *X, result;
+    double **X_mat, **A_mat, **D_mat, **W_mat;
+    int N, cols;
 
     if(!PyArg_ParseTuple(args, "O", &X)) {
         return NULL; /* In the CPython API, a NULL value is never valid for a
                         PyObject* so it is used to signal that an error has occurred. */
     }
 
-    return (norm_implementation(X));
+    N = PyList_Size(X); // get the number of data points in the X matrix
+    cols = PyList_Size( PyList_GetItem(X, 0) ); // get the number of columns (the dimension) of each data point
+    X_mat = convertPyToC(X, N, cols); 
+    A_mat = sym(X_mat, N, cols); // calls the sym function from the symnmf.c
+    D_mat = ddg(A_mat, N); // calls the ddg function from the symnmf.c
+    W_mat = norm(A_mat, D_mat, N);
+    result = convertCToPy(W_mat, N, N);
+    
+    freeMat(X_mat, N);
+    freeMat(A_mat, N);
+    freeMat(D_mat, N);
+    freeMat(W_mat, N);
+    return result;
 }
 
 
