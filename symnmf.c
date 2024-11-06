@@ -51,14 +51,15 @@ double** sym(double** X_mat, int N, int cols) {
             }
         }
     }
-
     return A_mat;
 }
 
-double** ddg(double** X_mat, int N) {
-    double **D_mat;
-    int i;
-
+double** ddg(double** X_mat, int N, int cols) {
+    double **D_mat, **A_mat;
+    int i, j;
+    double sum;
+    A_mat = sym(X_mat, N, cols);
+    
     D_mat = (double **)malloc(N*sizeof(double *));
     if (D_mat == NULL) {
         printf("An Error Has Occurred\n");
@@ -66,7 +67,18 @@ double** ddg(double** X_mat, int N) {
     }
 
     for (i=0;i<N;i++) {
-
+        D_mat[i] = (double *)calloc(N,sizeof(double));
+        if (D_mat[i] == NULL) {
+            printf("An Error Has Occurred\n");
+            exit(1);
+        }
+        sum = 0.0; // init sum variable
+        for(j=0;j<cols;j++) {
+            sum += A_mat[i][j];
+        }
+        D_mat[i][i] = sum;
     }
 
+    freeMat(A_mat, N);
+    return D_mat;
 }
