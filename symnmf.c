@@ -4,8 +4,8 @@
 # include <string.h>
 
 const double EPS = 0.0001;
-const int max_iter = 300;
-const double beta = 0.5;
+const int MAX_ITER = 300;
+const double BETA = 0.5;
 
 double findDist(double* x1, double* x2, int cols) {
     int i;
@@ -158,7 +158,7 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
     // Using the numerator and denominator matrices, assign the values according to the formula
     for (i=0;i<N;i++) {
         for (j=0;j<cols;j++) {
-            result[i][j] = 1-beta + beta*(numerator[i][j]/denominator[i][j]);
+            result[i][j] = 1-BETA + BETA*(numerator[i][j]/denominator[i][j]);
             result[i][j] = result[i][j] * H_mat[i][j];
         }
     }
@@ -260,7 +260,7 @@ double** symnmf(double** H_mat, double** W_mat, int N, int k) {
             exit(1);
         }
     }
-    for (iter=0;iter<max_iter;iter++) {
+    for (iter=0;iter<MAX_ITER;iter++) {
         H_new = updateH(H_mat, W_mat, N, k);
         end = covergence(H_mat, H_new, N, k);
         H_mat = H_new;

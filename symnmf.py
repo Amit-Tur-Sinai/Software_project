@@ -3,7 +3,6 @@ import pandas as pd
 import sys
 import symnmf 
 
-
 np.random.seed(1234)
 
 def init_H_mat(W_mat, N, k):
@@ -30,7 +29,7 @@ if __name__ == '__main__':
             if goal == "symnmf":
                 W_mat = symnmf.norm(X_mat)
                 H_mat = init_H_mat(W_mat, N, k)
-                result_mat = symnmf.symnmf(H_mat, W_mat)
+                result_mat = symnmf.symnmf(H_mat, W_mat, N, k)
                 printResult(result_mat)    
 
             elif goal == "sym":
