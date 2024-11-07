@@ -3,6 +3,7 @@
 # include <math.h>
 
 
+
 double findDist(double* x1, double* x2, int cols) {
     int i;
     double dist = 0.0;

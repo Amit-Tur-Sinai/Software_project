@@ -7,6 +7,7 @@
 # include "symnmf.h"
 
 
+
 double** convertPyToC(PyObject* py_list, int N, int cols) {
 
     double** mat = (double**)malloc(N * sizeof(double*));

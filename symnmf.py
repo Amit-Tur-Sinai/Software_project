@@ -3,6 +3,7 @@ import pandas as pd
 import sys
 import symnmf 
 
+
 np.random.seed(1234)
 
 def init_H_mat(W_mat, N, k):
