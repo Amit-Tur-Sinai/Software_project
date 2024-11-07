@@ -12,31 +12,45 @@ def init_H_mat(W_mat, N, k):
     H_mat = np.random.uniform(0, high, size=(N,k))
     return H_mat
 
+def printResult(resultMat):
+    for row in resultMat:
+        print(','.join([f'{num:.4f}' for num in row]))  
+
 if __name__ == '__main__':
-    if len(sys.argv) == 4:
-        k, goal, file_name = sys.argv[1:]
+    try:
+        if len(sys.argv) == 4:
+            k, goal, file_name = sys.argv[1:]
 
-        X_mat = pd.read_csv(file_name, sep=",", header=None).values.tolist()
-        N = len(X_mat)
-        cols = len(X_mat[0])
+            X_mat = pd.read_csv(file_name, sep=",", header=None).values.tolist()
+            N = len(X_mat)
+            cols = len(X_mat[0])
+            k = int(k)
 
-        if goal == "symnmf":
-            W_mat = symnmf.norm(X_mat)
-            H_mat = init_H_mat(W_mat, N, k)
-            result_mat = symnmf.symnmf(H_mat, W_mat)
 
-        elif goal == "sym":
-            A_mat = symnmf.sym(X_mat)
+            if goal == "symnmf":
+                W_mat = symnmf.norm(X_mat)
+                H_mat = init_H_mat(W_mat, N, k)
+                result_mat = symnmf.symnmf(H_mat, W_mat)
+                printResult(result_mat)    
 
-        elif goal == "ddg":
-            D_mat = symnmf.ddg(X_mat)
+            elif goal == "sym":
+                A_mat = symnmf.sym(X_mat)
+                printResult(A_mat)                
 
-        elif goal == "norm":
-            W_mat = symnmf.norm(X_mat)
+            elif goal == "ddg":
+                D_mat = symnmf.ddg(X_mat)
+                printResult(D_mat)                
 
+            elif goal == "norm":
+                W_mat = symnmf.norm(X_mat)
+                printResult(W_mat)    
+
+            else:
+                print("An Error Has Occurred")
+                exit()    
         else:
             print("An Error Has Occurred")
-            exit()    
-    else:
+            exit()
+    except:
         print("An Error Has Occurred")
-        exit()
+        exit()         
