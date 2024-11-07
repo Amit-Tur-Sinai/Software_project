@@ -2,7 +2,9 @@
 # include <stdlib.h>
 # include <math.h>
 
-
+const double EPS = 0.0001;
+const int max_iter = 300;
+const double beta = 0.5;
 
 double findDist(double* x1, double* x2, int cols) {
     int i;
@@ -35,8 +37,7 @@ double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int 
         printf("An Error Has Occurred\n");
         exit(1);
     }
-    
-    // init reault matrix in size rows1 * cols2
+    // init result matrix in size rows1 * cols2
     for (i=0;i<rows1;i++) {
         result[i] = (double *)malloc(cols2*sizeof(double));
     }
@@ -50,6 +51,99 @@ double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int 
             result[i][j] = sum;
         }
     }
+    return result;
+}
+
+double squaredFrobNorm(double** mat, int N, int cols) {
+    int i, j;
+    double sum = 0.0;
+    for (i=0;i<N;i++) {
+        for (j=0;j<cols;j++) {
+            sum += pow(mat[i][j], 2);
+        }
+    }
+    return sum;
+}
+
+int covergence(double** H_old, double** H_new, int N, int cols) {
+    int i, j, output;
+    double** result;
+    double frobNorm;
+    result = (double **)malloc(N*sizeof(double *));
+    if (result == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+    for (i=0;i<N;i++) {
+        result[i] = (double *)malloc(N*sizeof(double));
+        if (result[i] == NULL) {
+            printf("An Error Has Occurred\n");
+            exit(1);
+        }
+    }
+    for (i=0;i<N;i++) {
+        for (j=0;j<cols;j++) {
+            result[i][j] = H_new[i][j] - H_old[i][j];
+        }
+    }
+    frobNorm = squaredFrobNorm(result, N, cols);
+    if (frobNorm < EPS) {output = 1;}
+    else {output = 0;}
+    freeMat(result, N);
+    return 0;
+}
+
+double** transpose(double** mat, int N, int cols) {
+    double** result;
+    int i, j;
+    result = (double **)malloc(N*sizeof(double *));
+    if (result == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+    for (i=0;i<N;i++) {
+        result[i] = (double *)malloc(N*sizeof(double));
+        if (result[i] == NULL) {
+            printf("An Error Has Occurred\n");
+            exit(1);
+        }
+    }
+    for (i=0;i<N;i++) {
+        for (j=0;j<cols;j++) {
+            result[i][j] = mat[j][i];
+        }
+    }
+    return result;
+}
+
+double** updateH(double** H_mat, double** W_mat, int N, int cols) {
+    double **result, **numerator, **denominator, **HT;
+    int i, j;
+    result = (double **)malloc(N*sizeof(double *));
+    if (result == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+    for (i=0;i<N;i++) {
+        result[i] = (double *)malloc(N*sizeof(double));
+        if (result[i] == NULL) {
+            printf("An Error Has Occurred\n");
+            exit(1);
+        }
+    }
+    numerator = MatrixMultiply(W_mat, H_mat, N, N, N, cols);
+    HT = transpose(H_mat, N, cols);
+    denominator = MatrixMultiply(H_mat, HT, N, cols, cols, N);
+    denominator = MatrixMultiply(denominator, H_mat, N, N, N, cols);
+    for (i=0;i<N;i++) {
+        for (j=0;j<cols;j++) {
+            result[i][j] = 1-beta + beta*(numerator[i][j]/denominator[i][j]);
+            result[i][j] = result[i][j] * H_mat[i][j];
+        }
+    }
+    freeMat(HT, cols);
+    freeMat(numerator, N);
+    freeMat(denominator, N);
     return result;
 }
 
@@ -124,6 +218,11 @@ double** norm(double** A_mat, double** D_mat, int N) {
 
     free(tempMat);
     return result;
+}
+
+double** symnmf(double** H_mat, double** W_mat, int N, int k) {
+    // iter 300 times, calling update and convergence
+    updateH(H_mat, W_mat, N, k)
 }
 
 
