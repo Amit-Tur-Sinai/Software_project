@@ -42,24 +42,29 @@ void printMat(double** mat, int N, int cols) {
 }
 
 double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int rows2, int cols2) {
-    // Multiplying matrices
+    /* Multiplying matrices */
     double** result;
     int i, j, k;
     double sum;
+
+    if (cols1 != rows2) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
 
     result = (double **)malloc(rows1*sizeof(double *));
     if (result == NULL) {
         printf("An Error Has Occurred\n");
         exit(1);
     }
-    // init result matrix in size rows1 * cols2
+    /* init result matrix in size rows1 * cols2*/
     for (i=0;i<rows1;i++) {
         result[i] = (double *)malloc(cols2*sizeof(double));
     }
 
     for (i=0;i<rows1;i++) {
         for (j=0;j<cols2;j++) {
-            sum = 0.0; // init sum
+            sum = 0.0; /* init sum */
             for (k=0;k<rows2;k++) {
                 sum += mat1[i][k] * mat2[k][j];
             }
@@ -70,7 +75,7 @@ double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int 
 }
 
 double squaredFrobNorm(double** mat, int N, int cols) {
-    // Implementation of the Frobenius norm
+    /* Implementation of the Frobenius norm */
     int i, j;
     double sum = 0.0;
     for (i=0;i<N;i++) {
@@ -82,7 +87,7 @@ double squaredFrobNorm(double** mat, int N, int cols) {
 }
 
 int covergence(double** H_old, double** H_new, int N, int cols) {
-    // Checking convergence of two matrices by using the Frobenius norm
+    /* Checking convergence of two matrices by using the Frobenius norm*/
     int i, j, output;
     double** result;
     double frobNorm;
@@ -104,14 +109,18 @@ int covergence(double** H_old, double** H_new, int N, int cols) {
         }
     }
     frobNorm = squaredFrobNorm(result, N, cols);
-    if (frobNorm < EPS) {output = 1;}
-    else {output = 0;}
+    if (frobNorm < EPS) {
+        output = 1;
+    }
+    else {
+        output = 0;
+    }
     freeMat(result, N);
-    return 0;
+    return output;
 }
 
 double** transpose(double** mat, int N, int cols) {
-    // Transposing a matrix by allocating space for a new matrix, iterating over the original and changing the indexes
+    /* Transposing a matrix by allocating space for a new matrix, iterating over the original and changing the indexes */
     double** result;
     int i, j;
     result = (double **)malloc(N*sizeof(double *));
@@ -135,7 +144,7 @@ double** transpose(double** mat, int N, int cols) {
 }
 
 double** updateH(double** H_mat, double** W_mat, int N, int cols) {
-    // Helper function, we use it in symnmf
+    /* Helper function, we use it in symnmf */
     double **result, **numerator, **denominator, **HT;
     int i, j;
     result = (double **)malloc(N*sizeof(double *));
@@ -150,12 +159,12 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
             exit(1);
         }
     }
-    // Get the numerator and denominator of the expression by multiplying matrices, and transposing
+    /* Get the numerator and denominator of the expression by multiplying matrices, and transposing */
     numerator = MatrixMultiply(W_mat, H_mat, N, N, N, cols);
     HT = transpose(H_mat, N, cols);
     denominator = MatrixMultiply(H_mat, HT, N, cols, cols, N);
     denominator = MatrixMultiply(denominator, H_mat, N, N, N, cols);
-    // Using the numerator and denominator matrices, assign the values according to the formula
+    /* Using the numerator and denominator matrices, assign the values according to the formula */
     for (i=0;i<N;i++) {
         for (j=0;j<cols;j++) {
             result[i][j] = 1-BETA + BETA*(numerator[i][j]/denominator[i][j]);
@@ -169,7 +178,7 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
 }
 
 double** sym(double** X_mat, int N, int cols) {
-    // Using the findDist helper function, we calculate the distance of every two points, and assign the value to the newly allocated matrix
+    /* Using the findDist helper function, we calculate the distance of every two points, and assign the value to the newly allocated matrix */
     double **A_mat;
     int i, j, dist;
 
@@ -200,7 +209,7 @@ double** sym(double** X_mat, int N, int cols) {
 }
 
 double** ddg(double** A_mat, int N) {
-    // Using the similarity matrix, we allocate space for a new matrix, calculate the values of the lines of A, and assign the values to the new matrix
+    /* Using the similarity matrix, we allocate space for a new matrix, calculate the values of the lines of A, and assign the values to the new matrix */
     double **D_mat;
     int i, j;
     double sum;
@@ -217,7 +226,7 @@ double** ddg(double** A_mat, int N) {
             printf("An Error Has Occurred\n");
             exit(1);
         }
-        sum = 0.0; // init sum variable
+        sum = 0.0; /* init sum variable */
         for(j=0;j<N;j++) {
             sum += A_mat[i][j];
         }
@@ -228,11 +237,11 @@ double** ddg(double** A_mat, int N) {
 }
 
 double** norm(double** A_mat, double** D_mat, int N) {
-    // Using the transpose and multiply helper functions, we calculate the norm matrix
+    /* Using the transpose and multiply helper functions, we calculate the norm matrix */
     int i;
     double **tempMat, **result;
 
-    // convert D_mat to be D_mat ** -0.5
+    /* convert D_mat to be D_mat ** -0.5 */
     for(i=0;i<N;i++) {
         D_mat[i][i] = pow(D_mat[i][i], -0.5);
     }
@@ -245,7 +254,7 @@ double** norm(double** A_mat, double** D_mat, int N) {
 }
 
 double** symnmf(double** H_mat, double** W_mat, int N, int k) {
-    // Iterate up to 300 times, and check convergence, using the two helper functions
+    /* Iterate up to 300 times, and check convergence, using the two helper functions */
     int iter, i, end;
     double** H_new;
     H_new = (double **)malloc(N*sizeof(double *));
@@ -275,15 +284,16 @@ double** symnmf(double** H_mat, double** W_mat, int N, int k) {
 int main(int argc, char *argv[]) {
     FILE *file;
     int i, j, N, cols;
-    char *line, *val; 
+    char *line, *val, *goal, *fileName; 
     double **X_mat, **A_mat, **W_mat, **D_mat;
+    size_t len;
     if (argc != 3) {
         printf("An Error Has Occurred\n");
         exit(1);
     }
 
-    char* goal = argv[1];
-    char* fileName = argv[2];
+    goal = argv[1];
+    fileName = argv[2];
     file = fopen(fileName, "r");
     if (file == NULL) {
         printf("An Error Has Occurred\n");
@@ -292,8 +302,8 @@ int main(int argc, char *argv[]) {
     N = 0;
     cols = 0;
     
-    // Calculating the dimensions of the data
-    size_t len = 0;
+    /* Calculating the dimensions of the data */
+    len = 0;
     while (getline(&line, &len, file) != -1) {
         if (N == 0) {
             val = strtok(line, ",");
@@ -304,7 +314,7 @@ int main(int argc, char *argv[]) {
         }
         N++;
     }
-    rewind(file); // Going back to the beginning of the file in order to read the points
+    rewind(file); /* Going back to the beginning of the file in order to read the points */
 
     X_mat = (double **)malloc(N*sizeof(double *));
     if (X_mat == NULL) {
@@ -340,7 +350,7 @@ int main(int argc, char *argv[]) {
     free(line);
     fclose(file);
 
-    // Start of logic
+    /* Start of logic */
     if (strcmp(goal, "sym") == 0) {
         A_mat = sym(X_mat, N, cols);
         printMat(A_mat, N, N);
