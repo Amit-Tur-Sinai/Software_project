@@ -52,7 +52,7 @@ PyObject* convertCToPy(double** mat, int N, int cols) {
 
 
 static PyObject* ddg_func(PyObject *self, PyObject *args){
-    PyObject *X;
+    PyObject *X, *result;
     double **X_mat, **D_mat, **A_mat;
     int N, cols;
 
@@ -75,7 +75,7 @@ static PyObject* ddg_func(PyObject *self, PyObject *args){
 }
 
 static PyObject* sym_func(PyObject *self, PyObject *args){
-    PyObject *X, result;
+    PyObject *X, *result;
     double **X_mat, **A_mat;
     int N, cols;
 
@@ -95,7 +95,7 @@ static PyObject* sym_func(PyObject *self, PyObject *args){
 }
 
 static PyObject* norm_func(PyObject *self, PyObject *args){
-    PyObject *X, result;
+    PyObject *X, *result;
     double **X_mat, **A_mat, **D_mat, **W_mat;
     int N, cols;
 
@@ -121,15 +121,24 @@ static PyObject* norm_func(PyObject *self, PyObject *args){
 
 
 static PyObject* symnmf_func(PyObject *self, PyObject *args){
-    PyObject *H, *W;
+    PyObject *H, *W, *result;
     int N,K;
+    double **W_mat, **H_mat;
 
     if(!PyArg_ParseTuple(args, "OOii", &H, &W, &N, &K)) {
         return NULL; /* In the CPython API, a NULL value is never valid for a
                         PyObject* so it is used to signal that an error has occurred. */
     }
+    N = PyList_Size(X); // get the number of data points in the X matrix
+    cols = PyList_Size( PyList_GetItem(X, 0) ); // get the number of columns (the dimension) of each data point
+    W_mat = convertPyToC(W, N, N); 
+    H_mat = convertPyToC(H, N, K);
+    H_mat = symnmf(H_mat, W_mat, N, K);
+    result = convertCToPy(H_mat, N, K);
+    freeMat(H_mat, N);
+    freeMat(W_mat, N);
 
-    return (symnmf_implementation(W,H,n,K));
+    return result;
 }
 
 // module's function table
@@ -137,19 +146,19 @@ static PyMethodDef Symnmf_FunctionsTable[] = {
     {"symnmf",              
       (PyCFunction) symnmf_func, 
       METH_VARARGS,           
-      PyDoc_STR("ADD----------------------")}, 
+      PyDoc_STR("Perform full the symNMF as described and output H")}, 
     {"norm",              
       (PyCFunction) norm_func, 
       METH_VARARGS,          
-      PyDoc_STR("ADD----------------------")},
+      PyDoc_STR("Calculate and output the normalized similarity matrix as described")},
     {"ddg",              
       (PyCFunction) ddg_func, 
       METH_VARARGS,          
-      PyDoc_STR("ADD----------------------")},
+      PyDoc_STR("Calculate and output the Diagonal Degree Matrix as described")},
     {"sym",                   
       (PyCFunction) sym_func, 
       METH_VARARGS,         
-      PyDoc_STR("ADD----------------------")},
+      PyDoc_STR("Calculate and output the similarity matrix as described")},
     {NULL, NULL, 0, NULL} 
 };
 

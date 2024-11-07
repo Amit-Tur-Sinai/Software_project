@@ -222,7 +222,30 @@ double** norm(double** A_mat, double** D_mat, int N) {
 
 double** symnmf(double** H_mat, double** W_mat, int N, int k) {
     // iter 300 times, calling update and convergence
-    updateH(H_mat, W_mat, N, k)
+    int iter, i, end;
+    double** H_new;
+    H_new = (double **)malloc(N*sizeof(double *));
+    if (H_new == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+    for (i=0;i<N;i++) {
+        H_new[i] = (double *)malloc(N*sizeof(double));
+        if (H_new[i] == NULL) {
+            printf("An Error Has Occurred\n");
+            exit(1);
+        }
+    }
+    for (iter=0;iter<max_iter;iter++) {
+        H_new = updateH(H_mat, W_mat, N, k);
+        end = covergence(H_mat, H_new, N, k);
+        H_mat = H_new;
+        if (end) {
+            break;
+        }
+    }
+    freeMat(H_new, N);
+    return H_mat;
 }
 
 
