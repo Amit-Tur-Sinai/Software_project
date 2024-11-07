@@ -1,6 +1,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <math.h>
+# include <string.h>
 
 const double EPS = 0.0001;
 const int max_iter = 300;
@@ -27,7 +28,21 @@ void freeMat(double** mat, int N) {
     free(mat);
 }
 
+void printMat(double** mat, int N, int cols) {
+    int i, j;
+    for (i=0;i<N;i++) {
+        for (j=0;j<cols;j++) {
+            printf("%.4f", mat[i][j]);
+            if (j != cols -1) {
+                printf(",");
+            }
+        }
+        printf("\n");
+    }
+}
+
 double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int rows2, int cols2) {
+    // Multiplying matrices
     double** result;
     int i, j, k;
     double sum;
@@ -55,6 +70,7 @@ double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int 
 }
 
 double squaredFrobNorm(double** mat, int N, int cols) {
+    // Implementation of the Frobenius norm
     int i, j;
     double sum = 0.0;
     for (i=0;i<N;i++) {
@@ -66,6 +82,7 @@ double squaredFrobNorm(double** mat, int N, int cols) {
 }
 
 int covergence(double** H_old, double** H_new, int N, int cols) {
+    // Checking convergence of two matrices by using the Frobenius norm
     int i, j, output;
     double** result;
     double frobNorm;
@@ -94,6 +111,7 @@ int covergence(double** H_old, double** H_new, int N, int cols) {
 }
 
 double** transpose(double** mat, int N, int cols) {
+    // Transposing a matrix by allocating space for a new matrix, iterating over the original and changing the indexes
     double** result;
     int i, j;
     result = (double **)malloc(N*sizeof(double *));
@@ -117,6 +135,7 @@ double** transpose(double** mat, int N, int cols) {
 }
 
 double** updateH(double** H_mat, double** W_mat, int N, int cols) {
+    // Helper function, we use it in symnmf
     double **result, **numerator, **denominator, **HT;
     int i, j;
     result = (double **)malloc(N*sizeof(double *));
@@ -131,10 +150,12 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
             exit(1);
         }
     }
+    // Get the numerator and denominator of the expression by multiplying matrices, and transposing
     numerator = MatrixMultiply(W_mat, H_mat, N, N, N, cols);
     HT = transpose(H_mat, N, cols);
     denominator = MatrixMultiply(H_mat, HT, N, cols, cols, N);
     denominator = MatrixMultiply(denominator, H_mat, N, N, N, cols);
+    // Using the numerator and denominator matrices, assign the values according to the formula
     for (i=0;i<N;i++) {
         for (j=0;j<cols;j++) {
             result[i][j] = 1-beta + beta*(numerator[i][j]/denominator[i][j]);
@@ -148,6 +169,7 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
 }
 
 double** sym(double** X_mat, int N, int cols) {
+    // Using the findDist helper function, we calculate the distance of every two points, and assign the value to the newly allocated matrix
     double **A_mat;
     int i, j, dist;
 
@@ -178,6 +200,7 @@ double** sym(double** X_mat, int N, int cols) {
 }
 
 double** ddg(double** A_mat, int N) {
+    // Using the similarity matrix, we allocate space for a new matrix, calculate the values of the lines of A, and assign the values to the new matrix
     double **D_mat;
     int i, j;
     double sum;
@@ -205,6 +228,7 @@ double** ddg(double** A_mat, int N) {
 }
 
 double** norm(double** A_mat, double** D_mat, int N) {
+    // Using the transpose and multiply helper functions, we calculate the norm matrix
     int i;
     double **tempMat, **result;
 
@@ -221,7 +245,7 @@ double** norm(double** A_mat, double** D_mat, int N) {
 }
 
 double** symnmf(double** H_mat, double** W_mat, int N, int k) {
-    // iter 300 times, calling update and convergence
+    // Iterate up to 300 times, and check convergence, using the two helper functions
     int iter, i, end;
     double** H_new;
     H_new = (double **)malloc(N*sizeof(double *));
@@ -246,6 +270,107 @@ double** symnmf(double** H_mat, double** W_mat, int N, int k) {
     }
     freeMat(H_new, N);
     return H_mat;
+}
+
+int main(int argc, char *argv[]) {
+    FILE *file;
+    int i, j, N, cols;
+    char *line, *val; 
+    double **X_mat, **A_mat, **W_mat, **D_mat;
+    if (argc != 3) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+
+    char* goal = argv[1];
+    char* fileName = argv[2];
+    file = fopen(fileName, "r");
+    if (file == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+    N = 0;
+    cols = 0;
+    
+    // Calculating the dimensions of the data
+    size_t len = 0;
+    while (getline(&line, &len, file) != -1) {
+        if (N == 0) {
+            val = strtok(line, ",");
+            while (val != NULL) {
+                cols++;
+                val = strtok(NULL, ",");
+            }
+        }
+        N++;
+    }
+    rewind(file); // Going back to the beginning of the file in order to read the points
+
+    X_mat = (double **)malloc(N*sizeof(double *));
+    if (X_mat == NULL) {
+        printf("An Error Has Occurred\n");
+        free(line);
+        fclose(file);
+        exit(1);
+    }
+    for (i=0;i<N;i++) {
+        X_mat[i] = (double *)malloc(N*sizeof(double));
+        if (X_mat[i] == NULL) {
+            printf("An Error Has Occurred\n");
+            for (j=0;j<i;j++) {
+                free(X_mat[j]);
+            }
+            free(X_mat);
+            free(line);
+            fclose(file);
+            exit(1);
+        }
+    }
+    for (i=0;i<N;i++) {
+        if (getline(&line, &len, file) != -1) {
+            val = strtok(line, ",");
+            for (j=0;j<cols;j++) {
+                if (val != NULL) {
+                    X_mat[i][j] = atof(val);
+                    val = strtok(NULL, ",");
+                }
+            }
+        }
+    }
+    free(line);
+    fclose(file);
+
+    // Start of logic
+    if (strcmp(goal, "sym") == 0) {
+        A_mat = sym(X_mat, N, cols);
+        printMat(A_mat, N, N);
+        freeMat(X_mat, N);
+        freeMat(A_mat, N);
+    }
+    else if (strcmp(goal, "ddg") == 0) {
+        A_mat = sym(X_mat, N, cols);
+        D_mat = ddg(A_mat, N);
+        printMat(D_mat, N, N);
+        freeMat(X_mat, N);
+        freeMat(A_mat, N);
+        freeMat(D_mat, N);
+    }
+
+    else if (strcmp(goal, "norm") == 0) {
+        A_mat = sym(X_mat, N, cols);
+        D_mat = ddg(A_mat, N);
+        W_mat = norm(A_mat, D_mat, N);
+        printMat(W_mat, N, N);
+        freeMat(X_mat, N);
+        freeMat(A_mat, N);
+        freeMat(D_mat, N);
+        freeMat(W_mat, N);
+    }
+    else {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+    return 0;
 }
 
 
