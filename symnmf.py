@@ -9,7 +9,7 @@ def init_H_mat(W_mat, N, k):
     m = np.mean(W_mat)
     high = 2* np.sqrt(m/k)
     H_mat = np.random.uniform(0, high, size=(N,k))
-    return H_mat
+    return H_mat.tolist()
 
 def printResult(resultMat):
     for row in resultMat:

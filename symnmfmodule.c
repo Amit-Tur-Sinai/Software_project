@@ -106,14 +106,14 @@ static PyObject* norm_func(PyObject *self, PyObject *args){
 
 static PyObject* symnmf_func(PyObject *self, PyObject *args){
     PyObject *H, *W, *result;
-    int N, K, cols;
+    int N, K;
     double **W_mat, **H_mat;
 
     if(!PyArg_ParseTuple(args, "OOii", &H, &W, &N, &K)) {
         return NULL; /* In the CPython API, a NULL value is never valid for a
                         PyObject* so it is used to signal that an error has occurred. */
     }
-    N = PyList_Size(H); /* get the number of data points in the H matrix */
+    
     W_mat = convertPyToC(W, N, N); 
     H_mat = convertPyToC(H, N, K);
     H_mat = symnmf(H_mat, W_mat, N, K);

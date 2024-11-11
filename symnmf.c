@@ -180,7 +180,8 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
 double** sym(double** X_mat, int N, int cols) {
     /* Using the findDist helper function, we calculate the distance of every two points, and assign the value to the newly allocated matrix */
     double **A_mat;
-    int i, j, dist;
+    int i, j;
+    double dist;
 
     A_mat = (double **)malloc(N*sizeof(double *));
     if (A_mat == NULL) {
@@ -249,7 +250,7 @@ double** norm(double** A_mat, double** D_mat, int N) {
     tempMat = MatrixMultiply(D_mat, A_mat, N, N, N, N);
     result = MatrixMultiply(tempMat, D_mat, N, N, N, N);
 
-    free(tempMat);
+    freeMat(tempMat, N);
     return result;
 }
 
@@ -263,7 +264,7 @@ double** symnmf(double** H_mat, double** W_mat, int N, int k) {
         exit(1);
     }
     for (i=0;i<N;i++) {
-        H_new[i] = (double *)malloc(N*sizeof(double));
+        H_new[i] = (double *)malloc(k*sizeof(double));
         if (H_new[i] == NULL) {
             printf("An Error Has Occurred\n");
             exit(1);
