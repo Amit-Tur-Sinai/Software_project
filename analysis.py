@@ -37,19 +37,7 @@ def update_centroid(centroid):
 
     centroid[1] = [] # reset the members list
 
-def kmeans(k, iter, input_data):
-    if not input_data.endswith(".txt"):
-        return
-
-    dataArray = []
-    with open(input_data) as file:
-        while True:
-            line = file.readline()
-            if not line:
-                break
-            point = [float(x) for x in line.split(",")]
-            dataArray.append(point)
-    
+def kmeans(k, iter, dataArray):   
     centroids = [] 
     for i in range(k): # Setting the first k data points as the initial cenotroids
         # centroid value, list of the members of its class, boolean indicator for convergence, point dimension
@@ -80,12 +68,12 @@ def init_H_mat(W_mat, N, k):
     m = np.mean(W_mat)
     high = 2* np.sqrt(m/k)
     H_mat = np.random.uniform(0, high, size=(N,k))
-    return H_mat
+    return H_mat.tolist()
 
 def generate_symnmf_clusters(X_mat, k):
     W_mat = symnmf.norm(X_mat)
     H_mat = init_H_mat(W_mat, N, k)
-    result_mat = symnmf.symnmf(H_mat, W_mat)
+    result_mat = symnmf.symnmf(H_mat, W_mat, N, k)
     
     clusters = np.argmax(result_mat, axis=1)
     return clusters
@@ -108,27 +96,23 @@ def generate_kmeans_clusters(X_mat, k):
     return clusters
 
 if __name__ == '__main__':
-    try:
-        if len(sys.argv) == 3:
-            k, file_name = sys.argv[1:]
+    if len(sys.argv) == 3:
+        k, file_name = sys.argv[1:]
 
-            X_mat = pd.read_csv(file_name, sep=",", header=None).values.tolist()
-            N = len(X_mat)
-            cols = len(X_mat[0])
-            k = int(k)
+        X_mat = pd.read_csv(file_name, sep=",", header=None).values.tolist()
+        N = len(X_mat)
+        cols = len(X_mat[0])
+        k = int(k)
 
-            symnmf_clusters = generate_symnmf_clusters(X_mat, k)
-            kmeans_clusters = generate_kmeans_clusters(X_mat, k)
-            
-            symnmf_silhouette_score = silhouette_score(X_mat, symnmf_clusters)
-            kmeans_silhouette_score = silhouette_score(X_mat, kmeans_clusters)
+        symnmf_clusters = generate_symnmf_clusters(X_mat, k)
+        kmeans_clusters = generate_kmeans_clusters(X_mat, k)
+        
+        symnmf_silhouette_score = silhouette_score(X_mat, symnmf_clusters)
+        kmeans_silhouette_score = silhouette_score(X_mat, kmeans_clusters)
 
-            print(f"nmf: {symnmf_silhouette_score:.4f}")
-            print(f"kmeans: {kmeans_silhouette_score:.4f}")
-        else:
-            print("An Error Has Occurred")
-            exit()             
-    except:
+        print(f"nmf: {symnmf_silhouette_score:.4f}")
+        print(f"kmeans: {kmeans_silhouette_score:.4f}")
+    else:
         print("An Error Has Occurred")
-        exit()  
+        exit()             
 
