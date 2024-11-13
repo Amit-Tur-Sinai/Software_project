@@ -64,29 +64,33 @@ def kmeans(k, iter, dataArray):
     return centroids
 
 # ######################### Silhouette Analysis Part #########################
+
+# Initialize H matrix using the W matrix
 def init_H_mat(W_mat, N, k):
     m = np.mean(W_mat)
     high = 2* np.sqrt(m/k)
     H_mat = np.random.uniform(0, high, size=(N,k))
     return H_mat.tolist()
 
+# Generates symnmf clusters using the symnmf module
 def generate_symnmf_clusters(X_mat, k):
     W_mat = symnmf.norm(X_mat)
     H_mat = init_H_mat(W_mat, N, k)
     result_mat = symnmf.symnmf(H_mat, W_mat, N, k)
     
-    clusters = np.argmax(result_mat, axis=1)
+    clusters = np.argmax(result_mat, axis=1) # choose for each element the cluster with the highest association score.
     return clusters
 
+# Generates kmeans clusters using the kmeans implemantation from HW1
 def generate_kmeans_clusters(X_mat, k):
     centroids = kmeans(k, MAX_ITER, X_mat)
+    clusters = []
 
-    clusters = list()
-
+    # For each data point, choose the nearest centroid to create clusters
     for point in X_mat:
         min_dist = float('inf')
         candidate_idx = None
-        for idx, centroid in enumerate(centroids):
+        for idx, centroid in enumerate(centroids): # Iterating over all centroids
             dist = findDist(centroid[0], point)
             if dist < min_dist:
                 candidate_idx = idx
@@ -98,8 +102,10 @@ def generate_kmeans_clusters(X_mat, k):
 if __name__ == '__main__':
     try:
         if len(sys.argv) == 3:
+            # Getting the arguments from the CMD
             k, file_name = sys.argv[1:]
 
+            # Converting the text file to list using the pandas package
             X_mat = pd.read_csv(file_name, sep=",", header=None).values.tolist()
             N = len(X_mat)
             cols = len(X_mat[0])
@@ -113,6 +119,8 @@ if __name__ == '__main__':
 
             print(f"nmf: {symnmf_silhouette_score:.4f}")
             print(f"kmeans: {kmeans_silhouette_score:.4f}")
+        
+        # Else the number of arguments is not 3 as expected  
         else:
             print("An Error Has Occurred")
             exit()             

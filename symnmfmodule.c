@@ -6,7 +6,7 @@
 # include "symnmf.h"
 
 
-
+/*Converts Python list to C array*/
 double** convertPyToC(PyObject* py_list, int N, int cols) {
     double** mat = (double**)malloc(N * sizeof(double*));
     for (int i = 0; i < N; i++) {
@@ -20,6 +20,7 @@ double** convertPyToC(PyObject* py_list, int N, int cols) {
     return mat;
 }
 
+/*Converts C array to Python list*/
 PyObject* convertCToPy(double** mat, int N, int cols) {
     PyObject* py_list = PyList_New(N);
     for (int i = 0; i < N; i++) {
@@ -34,15 +35,14 @@ PyObject* convertCToPy(double** mat, int N, int cols) {
     return py_list;
 }
 
-
+/*DDG wrapper function from python to c using the API*/
 static PyObject* ddg_func(PyObject *self, PyObject *args){
     PyObject *X, *result;
     double **X_mat, **D_mat, **A_mat;
     int N, cols;
 
     if(!PyArg_ParseTuple(args, "O", &X)) {
-        return NULL; /* In the CPython API, a NULL value is never valid for a
-                        PyObject* so it is used to signal that an error has occurred. */
+        return NULL; /* In the CPython API, a NULL value is never valid for a PyObject* so it is used to signal that an error has occurred. */
     }
 
     N = PyList_Size(X); /* get the number of data points in the X matrix */
@@ -58,6 +58,7 @@ static PyObject* ddg_func(PyObject *self, PyObject *args){
     return result;
 }
 
+/*SYM wrapper function from python to c using the API*/
 static PyObject* sym_func(PyObject *self, PyObject *args){
     PyObject *X, *result;
     double **X_mat, **A_mat;
@@ -78,14 +79,14 @@ static PyObject* sym_func(PyObject *self, PyObject *args){
     return result;
 }
 
+/*NORM wrapper function from python to c using the API*/
 static PyObject* norm_func(PyObject *self, PyObject *args){
     PyObject *X, *result;
     double **X_mat, **A_mat, **D_mat, **W_mat;
     int N, cols;
 
     if(!PyArg_ParseTuple(args, "O", &X)) {
-        return NULL; /* In the CPython API, a NULL value is never valid for a
-                        PyObject* so it is used to signal that an error has occurred. */
+        return NULL; /* In the CPython API, a NULL value is never valid for a PyObject* so it is used to signal that an error has occurred. */
     }
 
     N = PyList_Size(X); /* get the number of data points in the X matrix */
@@ -93,7 +94,7 @@ static PyObject* norm_func(PyObject *self, PyObject *args){
     X_mat = convertPyToC(X, N, cols); 
     A_mat = sym(X_mat, N, cols); /* calls the sym function from the symnmf.c*/
     D_mat = ddg(A_mat, N); /* calls the ddg function from the symnmf.c */
-    W_mat = norm(A_mat, D_mat, N);
+    W_mat = norm(A_mat, D_mat, N); /* calls the norm function from the symnmf.c */
     result = convertCToPy(W_mat, N, N);
     
     freeMat(X_mat, N);
@@ -103,20 +104,19 @@ static PyObject* norm_func(PyObject *self, PyObject *args){
     return result;
 }
 
-
+/*SYMNMF wrapper function from python to c using the API*/
 static PyObject* symnmf_func(PyObject *self, PyObject *args){
     PyObject *H, *W, *result;
     int N, K;
     double **W_mat, **H_mat;
 
     if(!PyArg_ParseTuple(args, "OOii", &H, &W, &N, &K)) {
-        return NULL; /* In the CPython API, a NULL value is never valid for a
-                        PyObject* so it is used to signal that an error has occurred. */
+        return NULL; /* In the CPython API, a NULL value is never valid for a PyObject* so it is used to signal that an error has occurred. */
     }
     
-    W_mat = convertPyToC(W, N, N); 
+    W_mat = convertPyToC(W, N, N);
     H_mat = convertPyToC(H, N, K);
-    H_mat = symnmf(H_mat, W_mat, N, K);
+    H_mat = symnmf(H_mat, W_mat, N, K); /* calls the ddg function from the symnmf.c */
     result = convertCToPy(H_mat, N, K);
     freeMat(H_mat, N);
     freeMat(W_mat, N);

@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
 CC = gcc
-CFLAGS = -ansi -Wall -Wextra -Werror -pedantic-errors -D_POSIX_C_SOURCE=200809L
+CFLAGS = -ansi -Wall -Wextra -Werror -pedantic-errors
 SRC = symnmf.c
 OBJS = $(SRC:.c=.o)
 EXEC = symnmf
