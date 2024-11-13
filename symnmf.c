@@ -57,9 +57,16 @@ double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int 
         printf("An Error Has Occurred\n");
         exit(1);
     }
-    /* init result matrix in size rows1 * cols2*/
     for (i=0;i<rows1;i++) {
         result[i] = (double *)malloc(cols2*sizeof(double));
+        if (result[i] == NULL) {
+            printf("An Error Has Occurred\n");
+            for (j=0;j<i;j++) {
+                free(result[j]);
+            }
+            free(result);
+            exit(1);
+        }
     }
 
     for (i=0;i<rows1;i++) {
@@ -86,7 +93,7 @@ double squaredFrobNorm(double** mat, int N, int cols) {
     return sum;
 }
 
-int covergence(double** H_old, double** H_new, int N, int cols) {
+int convergence(double** H_old, double** H_new, int N, int cols) {
     /* Checking convergence of two matrices by using the Frobenius norm*/
     int i, j, output;
     double** result;
@@ -100,6 +107,10 @@ int covergence(double** H_old, double** H_new, int N, int cols) {
         result[i] = (double *)malloc(N*sizeof(double));
         if (result[i] == NULL) {
             printf("An Error Has Occurred\n");
+            for (j=0;j<i;j++) {
+                free(result[j]);
+            }
+            free(result);
             exit(1);
         }
     }
@@ -121,25 +132,32 @@ int covergence(double** H_old, double** H_new, int N, int cols) {
 
 double** transpose(double** mat, int N, int cols) {
     /* Transposing a matrix by allocating space for a new matrix, iterating over the original and changing the indexes */
-    double** result;
     int i, j;
-    result = (double **)malloc(N*sizeof(double *));
+    double** result = (double **)malloc(cols * sizeof(double *));
     if (result == NULL) {
         printf("An Error Has Occurred\n");
         exit(1);
     }
-    for (i=0;i<N;i++) {
-        result[i] = (double *)malloc(N*sizeof(double));
+
+    for (i = 0; i < cols; i++) {
+        result[i] = (double *)malloc(N * sizeof(double));
         if (result[i] == NULL) {
             printf("An Error Has Occurred\n");
+            /* Free previously allocated rows */
+            for (j=0;j<i;j++) {
+                free(result[j]);
+            }
+            free(result);
             exit(1);
         }
     }
+    
     for (i=0;i<N;i++) {
         for (j=0;j<cols;j++) {
-            result[i][j] = mat[j][i];
+            result[j][i] = mat[i][j];
         }
     }
+
     return result;
 }
 
@@ -156,6 +174,10 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
         result[i] = (double *)malloc(N*sizeof(double));
         if (result[i] == NULL) {
             printf("An Error Has Occurred\n");
+            for (j=0;j<i;j++) {
+                free(result[j]);
+            }
+            free(result);
             exit(1);
         }
     }
@@ -193,6 +215,10 @@ double** sym(double** X_mat, int N, int cols) {
         A_mat[i] = (double *)malloc(N*sizeof(double));
         if (A_mat[i] == NULL) {
             printf("An Error Has Occurred\n");
+            for (j=0;j<i;j++) {
+                free(A_mat[j]);
+            }
+            free(A_mat);
             exit(1);
         }
 
@@ -225,6 +251,10 @@ double** ddg(double** A_mat, int N) {
         D_mat[i] = (double *)calloc(N,sizeof(double));
         if (D_mat[i] == NULL) {
             printf("An Error Has Occurred\n");
+            for (j=0;j<i;j++) {
+                free(D_mat[j]);
+            }
+            free(D_mat);
             exit(1);
         }
         sum = 0.0; /* init sum variable */
@@ -238,7 +268,7 @@ double** ddg(double** A_mat, int N) {
 }
 
 double** norm(double** A_mat, double** D_mat, int N) {
-    /* Using the transpose and multiply helper functions, we calculate the norm matrix */
+    /* Using the multiply helper function, we calculate the norm matrix */
     int i;
     double **tempMat, **result;
 
@@ -256,30 +286,25 @@ double** norm(double** A_mat, double** D_mat, int N) {
 
 double** symnmf(double** H_mat, double** W_mat, int N, int k) {
     /* Iterate up to 300 times, and check convergence, using the two helper functions */
-    int iter, i, end;
-    double** H_new;
-    H_new = (double **)malloc(N*sizeof(double *));
-    if (H_new == NULL) {
-        printf("An Error Has Occurred\n");
-        exit(1);
-    }
-    for (i=0;i<N;i++) {
-        H_new[i] = (double *)malloc(k*sizeof(double));
-        if (H_new[i] == NULL) {
-            printf("An Error Has Occurred\n");
-            exit(1);
-        }
-    }
+    int iter, end;
+    double** H_temp;
+    double** H_new = H_mat;
+
     for (iter=0;iter<MAX_ITER;iter++) {
-        H_new = updateH(H_mat, W_mat, N, k);
-        end = covergence(H_mat, H_new, N, k);
+        H_temp = H_new;               
+        H_new = updateH(H_temp, W_mat, N, k);  
+        end = convergence(H_temp, H_new, N, k);
+
+        if (H_temp != H_mat) {        
+            freeMat(H_temp, N);
+        }
+
         H_mat = H_new;
         if (end) {
             break;
         }
     }
-    freeMat(H_new, N);
-    return H_mat;
+    return H_new;
 }
 
 int main(int argc, char *argv[]) {
@@ -383,5 +408,3 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
-
-
