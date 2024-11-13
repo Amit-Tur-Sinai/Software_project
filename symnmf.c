@@ -41,6 +41,28 @@ void printMat(double** mat, int N, int cols) {
     }
 }
 
+/* Allocates memory for double** matrix*/
+double** AllocateMat(int N, int cols) {
+    int i,j;
+    double** result = (double **)malloc(N*sizeof(double *));
+    if (result == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }
+    for (i=0;i<N;i++) {
+        result[i] = (double *)malloc(cols*sizeof(double));
+        if (result[i] == NULL) {
+            printf("An Error Has Occurred\n");
+            for (j=0;j<i;j++) {
+                free(result[j]);
+            }
+            free(result);
+            exit(1);
+        }
+    }
+    return result;
+}
+
 /* Multiplying 2 matrices */
 double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int rows2, int cols2) {
     double** result;
@@ -51,23 +73,9 @@ double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int 
         printf("An Error Has Occurred\n");
         exit(1);
     }
-    /*Initialize result matrix*/
-    result = (double **)malloc(rows1*sizeof(double *));
-    if (result == NULL) {
-        printf("An Error Has Occurred\n");
-        exit(1);
-    }
-    for (i=0;i<rows1;i++) {
-        result[i] = (double *)malloc(cols2*sizeof(double));
-        if (result[i] == NULL) {
-            printf("An Error Has Occurred\n");
-            for (j=0;j<i;j++) {
-                free(result[j]);
-            }
-            free(result);
-            exit(1);
-        }
-    }
+    
+    result = AllocateMat(rows1, cols2);
+
     for (i=0;i<rows1;i++) {
         for (j=0;j<cols2;j++) {
             sum = 0.0; /* init sum */
@@ -97,23 +105,9 @@ int convergence(double** H_old, double** H_new, int N, int cols) {
     int i, j, output;
     double** result;
     double frobNorm;
-    /*Initialize result matrix*/
-    result = (double **)malloc(N*sizeof(double *));
-    if (result == NULL) {
-        printf("An Error Has Occurred\n");
-        exit(1);
-    }
-    for (i=0;i<N;i++) {
-        result[i] = (double *)malloc(cols*sizeof(double));
-        if (result[i] == NULL) {
-            printf("An Error Has Occurred\n");
-            for (j=0;j<i;j++) {
-                free(result[j]);
-            }
-            free(result);
-            exit(1);
-        }
-    }
+
+    result = AllocateMat(N, cols);
+    
     for (i=0;i<N;i++) { /*Calculating the difference matrix*/
         for (j=0;j<cols;j++) {
             result[i][j] = H_new[i][j] - H_old[i][j];
@@ -133,26 +127,7 @@ int convergence(double** H_old, double** H_new, int N, int cols) {
 /* Transposing a matrix by allocating space for a new matrix, iterating over the original and changing the indexes */
 double** transpose(double** mat, int N, int cols) {
     int i, j;
-    
-    /*Initialize result matrix*/
-    double** result = (double **)malloc(cols * sizeof(double *));
-    if (result == NULL) {
-        printf("An Error Has Occurred\n");
-        exit(1);
-    }
-
-    for (i = 0; i < cols; i++) {
-        result[i] = (double *)malloc(N * sizeof(double));
-        if (result[i] == NULL) {
-            printf("An Error Has Occurred\n");
-            /* Free previously allocated rows */
-            for (j=0;j<i;j++) {
-                free(result[j]);
-            }
-            free(result);
-            exit(1);
-        }
-    }
+    double** result = AllocateMat(cols, N);
     
     for (i=0;i<N;i++) {
         for (j=0;j<cols;j++) {
@@ -168,22 +143,8 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
     double **result, **numerator, **denominator, **HT;
     int i, j;
     /*Initialize result matrix*/
-    result = (double **)malloc(N*sizeof(double *));
-    if (result == NULL) {
-        printf("An Error Has Occurred\n");
-        exit(1);
-    }
-    for (i=0;i<N;i++) {
-        result[i] = (double *)malloc(cols*sizeof(double));
-        if (result[i] == NULL) {
-            printf("An Error Has Occurred\n");
-            for (j=0;j<i;j++) {
-                free(result[j]);
-            }
-            free(result);
-            exit(1);
-        }
-    }
+    result = AllocateMat(N, cols);
+
     /* Get the numerator and denominator of the expression by multiplying matrices, and transposing */
     numerator = MatrixMultiply(W_mat, H_mat, N, N, N, cols);
     HT = transpose(H_mat, N, cols);
@@ -208,22 +169,8 @@ double** sym(double** X_mat, int N, int cols) {
     int i, j;
     double dist;
 
-    A_mat = (double **)malloc(N*sizeof(double *));
-    if (A_mat == NULL) {
-        printf("An Error Has Occurred\n");
-        exit(1);
-    }
-    for (i=0;i<N;i++) {
-        A_mat[i] = (double *)malloc(N*sizeof(double));
-        if (A_mat[i] == NULL) {
-            printf("An Error Has Occurred\n");
-            for (j=0;j<i;j++) {
-                free(A_mat[j]);
-            }
-            free(A_mat);
-            exit(1);
-        }
-    }
+    A_mat = AllocateMat(N, N);
+    
     /* Calculating the A matrix*/
     for (i=0;i<N;i++) {
         for(j=0;j<N;j++) {
@@ -251,7 +198,7 @@ double** ddg(double** A_mat, int N) {
         exit(1);
     }
     for (i=0;i<N;i++) {
-        D_mat[i] = (double *)calloc(N,sizeof(double));
+        D_mat[i] = (double *)calloc(N,sizeof(double)); /*using calloc because it puts 0 as defualt value in all cells*/
         if (D_mat[i] == NULL) {
             printf("An Error Has Occurred\n");
             for (j=0;j<i;j++) {
