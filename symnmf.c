@@ -104,7 +104,7 @@ int convergence(double** H_old, double** H_new, int N, int cols) {
         exit(1);
     }
     for (i=0;i<N;i++) {
-        result[i] = (double *)malloc(N*sizeof(double));
+        result[i] = (double *)malloc(cols*sizeof(double));
         if (result[i] == NULL) {
             printf("An Error Has Occurred\n");
             for (j=0;j<i;j++) {
@@ -174,7 +174,7 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
         exit(1);
     }
     for (i=0;i<N;i++) {
-        result[i] = (double *)malloc(N*sizeof(double));
+        result[i] = (double *)malloc(cols*sizeof(double));
         if (result[i] == NULL) {
             printf("An Error Has Occurred\n");
             for (j=0;j<i;j++) {
