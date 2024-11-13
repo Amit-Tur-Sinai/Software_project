@@ -96,23 +96,26 @@ def generate_kmeans_clusters(X_mat, k):
     return clusters
 
 if __name__ == '__main__':
-    if len(sys.argv) == 3:
-        k, file_name = sys.argv[1:]
+    try:
+        if len(sys.argv) == 3:
+            k, file_name = sys.argv[1:]
 
-        X_mat = pd.read_csv(file_name, sep=",", header=None).values.tolist()
-        N = len(X_mat)
-        cols = len(X_mat[0])
-        k = int(k)
+            X_mat = pd.read_csv(file_name, sep=",", header=None).values.tolist()
+            N = len(X_mat)
+            cols = len(X_mat[0])
+            k = int(k)
 
-        symnmf_clusters = generate_symnmf_clusters(X_mat, k)
-        kmeans_clusters = generate_kmeans_clusters(X_mat, k)
-        
-        symnmf_silhouette_score = silhouette_score(X_mat, symnmf_clusters)
-        kmeans_silhouette_score = silhouette_score(X_mat, kmeans_clusters)
+            symnmf_clusters = generate_symnmf_clusters(X_mat, k)
+            kmeans_clusters = generate_kmeans_clusters(X_mat, k)
+            
+            symnmf_silhouette_score = silhouette_score(X_mat, symnmf_clusters)
+            kmeans_silhouette_score = silhouette_score(X_mat, kmeans_clusters)
 
-        print(f"nmf: {symnmf_silhouette_score:.4f}")
-        print(f"kmeans: {kmeans_silhouette_score:.4f}")
-    else:
+            print(f"nmf: {symnmf_silhouette_score:.4f}")
+            print(f"kmeans: {kmeans_silhouette_score:.4f}")
+        else:
+            print("An Error Has Occurred")
+            exit()             
+    except:
         print("An Error Has Occurred")
-        exit()             
-
+        exit()   

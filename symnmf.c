@@ -329,6 +329,7 @@ int main(int argc, char *argv[]) {
     cols = 0;
     
     /* Calculating the dimensions of the data */
+    line = NULL;
     len = 0;
     while (getline(&line, &len, file) != -1) {
         if (N == 0) {
