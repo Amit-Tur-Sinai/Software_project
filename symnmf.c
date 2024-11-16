@@ -46,18 +46,16 @@ double** AllocateMat(int N, int cols) {
     int i,j;
     double** result = (double **)malloc(N*sizeof(double *));
     if (result == NULL) {
-        printf("An Error Has Occurred\n");
-        exit(1);
+        return NULL;
     }
     for (i=0;i<N;i++) {
         result[i] = (double *)malloc(cols*sizeof(double));
         if (result[i] == NULL) {
-            printf("An Error Has Occurred\n");
             for (j=0;j<i;j++) {
                 free(result[j]);
             }
             free(result);
-            exit(1);
+            return NULL;            
         }
     }
     return result;
@@ -75,6 +73,10 @@ double** MatrixMultiply(double** mat1, double** mat2, int rows1, int cols1, int 
     }
     
     result = AllocateMat(rows1, cols2);
+    if (result == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }    
 
     for (i=0;i<rows1;i++) {
         for (j=0;j<cols2;j++) {
@@ -107,7 +109,11 @@ int convergence(double** H_old, double** H_new, int N, int cols) {
     double frobNorm;
 
     result = AllocateMat(N, cols);
-    
+    if (result == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }    
+
     for (i=0;i<N;i++) { /*Calculating the difference matrix*/
         for (j=0;j<cols;j++) {
             result[i][j] = H_new[i][j] - H_old[i][j];
@@ -128,7 +134,11 @@ int convergence(double** H_old, double** H_new, int N, int cols) {
 double** transpose(double** mat, int N, int cols) {
     int i, j;
     double** result = AllocateMat(cols, N);
-    
+    if (result == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }    
+
     for (i=0;i<N;i++) {
         for (j=0;j<cols;j++) {
             result[j][i] = mat[i][j];
@@ -144,7 +154,11 @@ double** updateH(double** H_mat, double** W_mat, int N, int cols) {
     int i, j;
     /*Initialize result matrix*/
     result = AllocateMat(N, cols);
-
+    if (result == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }    
+    
     /* Get the numerator and denominator of the expression by multiplying matrices, and transposing */
     numerator = MatrixMultiply(W_mat, H_mat, N, N, N, cols);
     HT = transpose(H_mat, N, cols);
@@ -170,7 +184,11 @@ double** sym(double** X_mat, int N, int cols) {
     double dist;
 
     A_mat = AllocateMat(N, N);
-    
+    if (A_mat == NULL) {
+        printf("An Error Has Occurred\n");
+        exit(1);
+    }    
+
     /* Calculating the A matrix*/
     for (i=0;i<N;i++) {
         for(j=0;j<N;j++) {
@@ -260,12 +278,46 @@ double** symnmf(double** H_mat, double** W_mat, int N, int k) {
     return H_new;
 }
 
+/* Calculates the number of columns of each data point (the dimension)*/
+int getColumnCount(FILE* file) {
+    double val;
+    char ch;
+    int cols = 0;    
+
+    while (fscanf(file, "%lf", &val) == 1) { 
+        cols++; 
+        ch = fgetc(file); /* Read the next character to check delimiter */
+        if (ch == '\n' || ch == EOF) {
+            break;
+        }
+    }
+
+    rewind(file); /* Going back to the beginning of the file in order to read the points */
+    return cols;
+}
+
+/* Calculates the number of columns of each data point (the dimension)*/
+int getRowsCount(FILE* file) {
+    double val;
+    char ch;
+    int rows = 0;
+
+    while (fscanf(file, "%lf", &val) == 1) { 
+        ch = fgetc(file);  /* Read the next character to check for new line or end of file */
+        if (ch == '\n' || ch == EOF) {
+            rows++;
+        }
+    }
+
+    rewind(file); /* Going back to the beginning of the file in order to read the points */
+    return rows;
+}
+
 int main(int argc, char *argv[]) {
     FILE *file;
     int i, j, N, cols;
-    char *line, *val, *goal, *fileName; 
+    char *goal, *fileName; 
     double **X_mat, **A_mat, **W_mat, **D_mat;
-    size_t len;
 
     if (argc != 3) {
         printf("An Error Has Occurred\n");
@@ -279,58 +331,40 @@ int main(int argc, char *argv[]) {
         printf("An Error Has Occurred\n");
         exit(1);
     }
-    N = 0;
-    cols = 0;
     
     /* Calculating the dimensions of the data */
-    line = NULL;
-    len = 0;
-    while (getline(&line, &len, file) != -1) {
-        if (N == 0) {
-            val = strtok(line, ",");
-            while (val != NULL) {
-                cols++;
-                val = strtok(NULL, ",");
-            }
-        }
-        N++;
-    }
-    rewind(file); /* Going back to the beginning of the file in order to read the points */
+    N = getRowsCount(file);
+    cols = getColumnCount(file);
 
     /*Initialize X matrix*/
-    X_mat = (double **)malloc(N*sizeof(double *));
+    X_mat = AllocateMat(N, cols);
     if (X_mat == NULL) {
         printf("An Error Has Occurred\n");
-        free(line);
-        fclose(file);
+        fclose(file);        
         exit(1);
-    }
-    for (i=0;i<N;i++) {
-        X_mat[i] = (double *)malloc(N*sizeof(double));
-        if (X_mat[i] == NULL) {
-            printf("An Error Has Occurred\n");
-            for (j=0;j<i;j++) {
-                free(X_mat[j]);
-            }
-            free(X_mat);
-            free(line);
-            fclose(file);
-            exit(1);
-        }
-    }
+    }        
+
     /*Reading the data from the file to the X matrix*/
     for (i=0;i<N;i++) {
-        if (getline(&line, &len, file) != -1) {
-            val = strtok(line, ",");
-            for (j=0;j<cols;j++) {
-                if (val != NULL) {
-                    X_mat[i][j] = atof(val);
-                    val = strtok(NULL, ",");
+        for (j=0;j<cols;j++) {
+            if (j == cols - 1) { /* The last value in the row */
+                if (fscanf(file, "%lf\n", &X_mat[i][j]) != 1) {
+                printf("An Error Has Occurred\n");
+                freeMat(X_mat, N);
+                fclose(file);        
+                exit(1);
+                }
+            } 
+            else {
+                if (fscanf(file, "%lf,", &X_mat[i][j]) != 1) {
+                printf("An Error Has Occurred\n");
+                freeMat(X_mat, N);
+                fclose(file);        
+                exit(1);
                 }
             }
         }
     }
-    free(line);
     fclose(file);
 
     /* Start of logic */
