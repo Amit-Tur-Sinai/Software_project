@@ -375,9 +375,9 @@ int perform_logic(char *goal, double** X_mat, int N, int cols) {
 
 int main(int argc, char *argv[]) {
     FILE *file;
-    int i, j, N, cols, exit_code;
+    int N, cols, exit_code;
     char *goal, *fileName; 
-    double **X_mat, **A_mat, **W_mat, **D_mat;
+    double **X_mat;
 
     if (argc != 3) {
         printf("An Error Has Occurred\n");
