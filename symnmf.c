@@ -313,9 +313,69 @@ int getRowsCount(FILE* file) {
     return rows;
 }
 
+/* Allocates memorey to the X matrix and read the data from the file into it*/
+double** create_X_mat(int N, int cols, FILE* file) {
+    int i,j;
+    double** X_mat = AllocateMat(N, cols); 
+    if (X_mat == NULL) {
+        return NULL;
+    }  
+    
+    for (i=0;i<N;i++) {
+        for (j=0;j<cols;j++) {
+            if (j == cols - 1) { /* The last value in the row */
+                if (fscanf(file, "%lf\n", &X_mat[i][j]) != 1) {
+                    freeMat(X_mat, N);
+                    return NULL;
+                }
+            } 
+            else {
+                if (fscanf(file, "%lf,", &X_mat[i][j]) != 1) {
+                    freeMat(X_mat, N);
+                    return NULL;
+                }
+            }
+        }
+    }
+    return X_mat;
+}
+
+/* Performs the relevant steps of the algorithm based on the given goal value*/
+int perform_logic(char *goal, double** X_mat, int N, int cols) {
+    double **A_mat, **W_mat, **D_mat;   
+
+    if (strcmp(goal, "sym") == 0) {
+        A_mat = sym(X_mat, N, cols);
+        printMat(A_mat, N, N);
+        freeMat(A_mat, N);
+    }
+    else if (strcmp(goal, "ddg") == 0) {
+        A_mat = sym(X_mat, N, cols);
+        D_mat = ddg(A_mat, N);
+        printMat(D_mat, N, N);
+        freeMat(A_mat, N);
+        freeMat(D_mat, N);
+    }
+
+    else if (strcmp(goal, "norm") == 0) {
+        A_mat = sym(X_mat, N, cols);
+        D_mat = ddg(A_mat, N);
+        W_mat = norm(A_mat, D_mat, N);
+        printMat(W_mat, N, N);
+        freeMat(A_mat, N);
+        freeMat(D_mat, N);
+        freeMat(W_mat, N);
+    }
+    else {
+        return 1;
+    }
+
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     FILE *file;
-    int i, j, N, cols;
+    int i, j, N, cols, exit_code;
     char *goal, *fileName; 
     double **X_mat, **A_mat, **W_mat, **D_mat;
 
@@ -336,64 +396,17 @@ int main(int argc, char *argv[]) {
     N = getRowsCount(file);
     cols = getColumnCount(file);
 
-    /*Initialize X matrix*/
-    X_mat = AllocateMat(N, cols);
+    X_mat = create_X_mat(N, cols, file);     /*Reading the data from the file to the X matrix*/
+    fclose(file); 
     if (X_mat == NULL) {
-        printf("An Error Has Occurred\n");
-        fclose(file);        
+        printf("An Error Has Occurred\n");       
         exit(1);
-    }        
+    } 
 
-    /*Reading the data from the file to the X matrix*/
-    for (i=0;i<N;i++) {
-        for (j=0;j<cols;j++) {
-            if (j == cols - 1) { /* The last value in the row */
-                if (fscanf(file, "%lf\n", &X_mat[i][j]) != 1) {
-                printf("An Error Has Occurred\n");
-                freeMat(X_mat, N);
-                fclose(file);        
-                exit(1);
-                }
-            } 
-            else {
-                if (fscanf(file, "%lf,", &X_mat[i][j]) != 1) {
-                printf("An Error Has Occurred\n");
-                freeMat(X_mat, N);
-                fclose(file);        
-                exit(1);
-                }
-            }
-        }
-    }
-    fclose(file);
+    exit_code = perform_logic(goal, X_mat, N, cols);
+    freeMat(X_mat, N);
 
-    /* Start of logic */
-    if (strcmp(goal, "sym") == 0) {
-        A_mat = sym(X_mat, N, cols);
-        printMat(A_mat, N, N);
-        freeMat(X_mat, N);
-        freeMat(A_mat, N);
-    }
-    else if (strcmp(goal, "ddg") == 0) {
-        A_mat = sym(X_mat, N, cols);
-        D_mat = ddg(A_mat, N);
-        printMat(D_mat, N, N);
-        freeMat(X_mat, N);
-        freeMat(A_mat, N);
-        freeMat(D_mat, N);
-    }
-
-    else if (strcmp(goal, "norm") == 0) {
-        A_mat = sym(X_mat, N, cols);
-        D_mat = ddg(A_mat, N);
-        W_mat = norm(A_mat, D_mat, N);
-        printMat(W_mat, N, N);
-        freeMat(X_mat, N);
-        freeMat(A_mat, N);
-        freeMat(D_mat, N);
-        freeMat(W_mat, N);
-    }
-    else {
+    if (exit_code != 0) {
         printf("An Error Has Occurred\n");
         exit(1);
     }
